@@ -1,53 +1,278 @@
-# GruaGo API
+# 🚛 GruaGo - Sistema de Gestión de Grúas
 
-A Node.js API with PostgreSQL database connection for the GruaGo project.
+![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
+![Node](https://img.shields.io/badge/node-%3E%3D16.0.0-green.svg)
+![PostgreSQL](https://img.shields.io/badge/postgresql-%3E%3D12.0.0-blue.svg)
+![License](https://img.shields.io/badge/license-MIT-green.svg)
 
-## Features
+Sistema completo de gestión de servicios de grúas con backend API REST, dashboard administrativo y base de datos PostgreSQL.
 
-- Express.js REST API
-- PostgreSQL database integration
-- Environment variable configuration
-- CORS support
-- Complete towing service management system with the following entities:
-  - Tenants (companies)
-  - Users (customers)
-  - Drivers
-  - Vehicles
-  - Services
-  - Tow Requests
-  - Invoices
-  - Ratings
-  - Notifications
+## 🚀 Características
 
-## Prerequisites
+### Backend API
+- **API REST completa** con Node.js y Express
+- **Base de datos PostgreSQL** con esquema optimizado
+- **Autenticación y autorización** por roles
+- **CORS configurado** para desarrollo y producción
+- **Validación de datos** en todas las rutas
 
-- Node.js (v14 or higher)
-- PostgreSQL (v12 or higher)
+### Frontend Dashboard
+- **Dashboard administrativo** con React y Vite
+- **Interfaz responsiva** con diseño moderno
+- **Métricas en tiempo real** del sistema
+- **Gestión completa** de todas las entidades
 
-## Installation
+### Sistema de Entidades
+- 👥 **Tenants** - Empresas de grúas
+- 🙋‍♂️ **Users** - Clientes del servicio
+- 🚗 **Drivers** - Conductores de grúas
+- 🚛 **Vehicles** - Flota de vehículos
+- ⚙️ **Services** - Tipos de servicios ofrecidos
+- 🚨 **Tow Requests** - Solicitudes de servicio
+- 💰 **Invoices** - Facturación automática
+- ⭐ **Ratings** - Sistema de calificaciones
 
-1. Clone the repository
+## 📋 Prerequisitos
+
+- **Node.js** v16.0.0 o superior
+- **PostgreSQL** v12.0.0 o superior
+- **npm** o **yarn** para gestión de paquetes
+
+## 🛠️ Instalación
+
+### 1. Clonar el repositorio
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/AbreuDotNet/GruaGo.git
 cd GruaGo
 ```
 
-2. Install dependencies
+### 2. Instalar dependencias
 
 ```bash
 npm install
 ```
 
-3. Set up environment variables
+### 3. Configurar base de datos PostgreSQL
 
-Create a `.env` file in the root directory with the following variables:
+Crear una base de datos llamada `gruago_test`:
 
+```sql
+CREATE DATABASE gruago_test;
 ```
+
+Ejecutar el script de inicialización:
+
+```bash
+psql -U postgres -d gruago_test -f src/config/init.sql
+```
+
+### 4. Configurar variables de entorno
+
+Crear un archivo `.env` en la raíz del proyecto:
+
+```env
+# Servidor
 PORT=3000
+
+# Base de datos PostgreSQL
 PG_HOST=localhost
 PG_PORT=5432
 PG_DATABASE=gruago_test
+PG_USER=postgres
+PG_PASSWORD=tu_password_aqui
+```
+
+### 5. Poblar con datos de prueba (Opcional)
+
+```bash
+node insert-sample-data.js
+```
+
+## 🚀 Uso
+
+### Iniciar el servidor API
+
+```bash
+# Modo desarrollo
+node src/server.js
+
+# O con nodemon para auto-reload
+npx nodemon src/server.js
+```
+
+El servidor estará disponible en: `http://localhost:3000`
+
+### Iniciar el dashboard frontend
+
+```bash
+# Modo desarrollo
+npm run dev
+```
+
+El dashboard estará disponible en: `http://localhost:5173`
+
+## 🧪 Pruebas
+
+### Probar conexión a la base de datos
+
+```bash
+node test-db.js
+```
+
+### Probar endpoints de la API
+
+```bash
+node test-api.js
+```
+
+## 📡 API Endpoints
+
+### Usuarios
+- `GET /api/users` - Obtener todos los usuarios
+- `GET /api/users/:id` - Obtener usuario por ID
+- `POST /api/users` - Crear nuevo usuario
+- `PUT /api/users/:id` - Actualizar usuario
+- `DELETE /api/users/:id` - Eliminar usuario
+
+### Conductores
+- `GET /api/drivers` - Obtener todos los conductores
+- `GET /api/drivers/:id` - Obtener conductor por ID
+- `POST /api/drivers` - Crear nuevo conductor
+- `PUT /api/drivers/:id` - Actualizar conductor
+- `DELETE /api/drivers/:id` - Eliminar conductor
+
+### Vehículos
+- `GET /api/vehicles` - Obtener todos los vehículos
+- `GET /api/vehicles/:id` - Obtener vehículo por ID
+- `POST /api/vehicles` - Crear nuevo vehículo
+- `PUT /api/vehicles/:id` - Actualizar vehículo
+- `DELETE /api/vehicles/:id` - Eliminar vehículo
+
+### Solicitudes de Grúa
+- `GET /api/tow-requests` - Obtener todas las solicitudes
+- `GET /api/tow-requests/:id` - Obtener solicitud por ID
+- `POST /api/tow-requests` - Crear nueva solicitud
+- `PUT /api/tow-requests/:id` - Actualizar solicitud
+- `DELETE /api/tow-requests/:id` - Eliminar solicitud
+
+### Servicios
+- `GET /api/services` - Obtener todos los servicios
+- `GET /api/services/:id` - Obtener servicio por ID
+- `POST /api/services` - Crear nuevo servicio
+- `PUT /api/services/:id` - Actualizar servicio
+- `DELETE /api/services/:id` - Eliminar servicio
+
+### Empresas (Tenants)
+- `GET /api/tenants` - Obtener todas las empresas
+- `GET /api/tenants/:id` - Obtener empresa por ID
+- `POST /api/tenants` - Crear nueva empresa
+- `PUT /api/tenants/:id` - Actualizar empresa
+- `DELETE /api/tenants/:id` - Eliminar empresa
+
+## 🗂️ Estructura del Proyecto
+
+```
+GruaGo/
+├── src/
+│   ├── config/
+│   │   ├── db.js              # Configuración de la base de datos
+│   │   └── init.sql           # Script de inicialización de tablas
+│   ├── controllers/           # Controladores de la API
+│   │   ├── userController.js
+│   │   ├── driverController.js
+│   │   ├── vehicleController.js
+│   │   ├── towRequestController.js
+│   │   ├── serviceController.js
+│   │   └── tenantController.js
+│   ├── models/                # Modelos de datos
+│   │   ├── user.js
+│   │   ├── driver.js
+│   │   ├── vehicle.js
+│   │   ├── towRequest.js
+│   │   ├── service.js
+│   │   └── tenant.js
+│   ├── routes/                # Definición de rutas
+│   │   ├── userRoutes.js
+│   │   ├── driverRoutes.js
+│   │   ├── vehicleRoutes.js
+│   │   ├── towRequestRoutes.js
+│   │   ├── serviceRoutes.js
+│   │   └── tenantRoutes.js
+│   ├── services/
+│   │   └── apiService.js      # Servicios auxiliares
+│   ├── App.tsx                # Dashboard React
+│   ├── App.css                # Estilos del dashboard
+│   └── server.js              # Servidor principal Express
+├── public/                    # Archivos estáticos
+├── insert-sample-data.js      # Script para datos de prueba
+├── test-api.js               # Pruebas de endpoints
+├── test-db.js                # Prueba de conexión DB
+├── package.json              # Dependencias del proyecto
+└── README.md                 # Este archivo
+```
+
+## 🔧 Scripts Disponibles
+
+```bash
+# Desarrollo
+npm run dev          # Iniciar dashboard en modo desarrollo
+npm run build        # Construir para producción
+npm run preview      # Vista previa de build de producción
+
+# Base de datos
+node test-db.js      # Probar conexión a PostgreSQL
+node insert-sample-data.js  # Insertar datos de prueba
+
+# API
+node src/server.js   # Iniciar servidor API
+node test-api.js     # Probar todos los endpoints
+```
+
+## 🔒 Seguridad
+
+- Variables de entorno para configuración sensible
+- Validación de entrada en todos los endpoints
+- Preparado para implementar JWT authentication
+- CORS configurado apropiadamente
+
+## 🚧 Próximas Funcionalidades
+
+- [ ] Autenticación JWT completa
+- [ ] Sistema de roles y permisos
+- [ ] Notificaciones en tiempo real
+- [ ] Integración con mapas (GPS tracking)
+- [ ] App móvil con Ionic
+- [ ] Sistema de pagos
+- [ ] Reportes y analytics
+- [ ] API de geolocalización
+
+## 🤝 Contribuir
+
+1. Fork el proyecto
+2. Crear una rama para tu feature (`git checkout -b feature/AmazingFeature`)
+3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
+4. Push a la rama (`git push origin feature/AmazingFeature`)
+5. Abrir un Pull Request
+
+## 📄 Licencia
+
+Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más detalles.
+
+## 👨‍💻 Autor
+
+**Daniel Abreu** - [@AbreuDotNet](https://github.com/AbreuDotNet)
+
+## 📞 Soporte
+
+Si tienes alguna pregunta o necesitas ayuda:
+
+- Crear un [Issue](https://github.com/AbreuDotNet/GruaGo/issues)
+- Email: danielabreu2310@hotmail.com
+
+---
+
+⭐ **¡Si te gusta este proyecto, dale una estrella!** ⭐
 PG_USER=gruago_test
 PG_PASSWORD=
 ```
