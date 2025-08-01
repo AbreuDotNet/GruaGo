@@ -3,6 +3,7 @@ const cors = require('cors');
 require('dotenv').config();
 
 // Import routes
+const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const tenantRoutes = require('./routes/tenantRoutes');
 const driverRoutes = require('./routes/driverRoutes');
@@ -19,6 +20,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Routes
+app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/tenants', tenantRoutes);
 app.use('/api/drivers', driverRoutes);

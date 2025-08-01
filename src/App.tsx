@@ -1,95 +1,79 @@
-import { useState, useEffect } from 'react'
-import './App.css'
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import Login from './components/Login';
+import Dashboard from './components/Dashboard';
+import './App.css';
 
-interface User {
-  id: number;
-  full_name: string;
-  email: string;
-  phone: string;
-  is_active: boolean;
-}
+// Protected Route Component
+const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isAuthenticated, isLoading } = useAuth();
 
-interface TowRequest {
-  id: number;
-  user_id: number;
-  status: string;
-  pickup_location: string;
-  destination: string;
-  created_at: string;
-}
-
-function App() {
-  const [users, setUsers] = useState<User[]>([]);
-  const [towRequests, setTowRequests] = useState<TowRequest[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
-    try {
-      const [usersRes, requestsRes] = await Promise.all([
-        fetch('/api/users'),
-        fetch('/api/tow-requests')
-      ]);
-      
-      const usersData = await usersRes.json();
-      const requestsData = await requestsRes.json();
-      
-      setUsers(usersData.data || []);
-      setTowRequests(requestsData.data || []);
-    } catch (error) {
-      console.error('Error fetching data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading) {
-    return <div className="loading">Cargando datos...</div>;
+  if (isLoading) {
+    return (
+      <div className="loading-container">
+        <div className="loading-spinner"></div>
+        <p>Verificando autenticación...</p>
+      </div>
+    );
   }
 
-  return (
-    <div className="dashboard">
-      <header className="dashboard-header">
-        <h1>🚚 GruaGo Dashboard</h1>
-        <p>Sistema de gestión de servicios de grúa</p>
-      </header>
+  return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
+};
 
-      <div className="dashboard-grid">
-        <div className="card">
-          <h2>👥 Usuarios Activos</h2>
-          <div className="stat-number">{users.length}</div>
-          <div className="user-list">
-            {users.slice(0, 5).map(user => (
-              <div key={user.id} className="user-item">
-                <span>{user.full_name}</span>
-                <span className={`status ${user.is_active ? 'active' : 'inactive'}`}>
-                  {user.is_active ? 'Activo' : 'Inactivo'}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
+// Public Route Component (redirect to dashboard if already authenticated)
+const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isAuthenticated, isLoading } = useAuth();
 
-        <div className="card">
-          <h2>🚨 Solicitudes de Grúa</h2>
-          <div className="stat-number">{towRequests.length}</div>
-          <div className="request-list">
-            {towRequests.slice(0, 5).map(request => (
-              <div key={request.id} className="request-item">
-                <span>#{request.id}</span>
-                <span className={`status status-${request.status?.toLowerCase()}`}>
-                  {request.status}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
+  if (isLoading) {
+    return (
+      <div className="loading-container">
+        <div className="loading-spinner"></div>
+        <p>Verificando autenticación...</p>
       </div>
-    </div>
+    );
+  }
+
+  return !isAuthenticated ? <>{children}</> : <Navigate to="/dashboard" replace />;
+};
+
+const AppContent: React.FC = () => {
+  return (
+    <Router>
+      <div className="app">
+        <Routes>
+          <Route
+            path="/login"
+            element={
+              <PublicRoute>
+                <Login />
+              </PublicRoute>
+            }
+          />
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          {/* Default redirect to dashboard */}
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          {/* Catch all route */}
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        </Routes>
+      </div>
+    </Router>
   );
-}
+};
+
+const App: React.FC = () => {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
+  );
+};
 
 export default App;
