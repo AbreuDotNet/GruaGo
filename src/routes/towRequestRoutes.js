@@ -1,10 +1,11 @@
 const express = require('express');
 const TowRequestController = require('../controllers/towRequestController');
+const { authenticateToken } = require('../middleware/auth');
 
 const router = express.Router();
 
 // Get all tow requests
-router.get('/', TowRequestController.getAllRequests);
+router.get('/', authenticateToken, TowRequestController.getAllRequests);
 
 // Get tow requests by tenant
 router.get('/tenant/:tenantId', TowRequestController.getRequestsByTenant);
