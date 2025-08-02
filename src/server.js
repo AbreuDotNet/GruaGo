@@ -10,6 +10,7 @@ const driverRoutes = require('./routes/driverRoutes');
 const vehicleRoutes = require('./routes/vehicleRoutes');
 const serviceRoutes = require('./routes/serviceRoutes');
 const towRequestRoutes = require('./routes/towRequestRoutes');
+const dashboardRoutes = require('./routes/dashboardRoutes');
 
 // Initialize express app
 const app = express();
@@ -27,6 +28,7 @@ app.use('/api/drivers', driverRoutes);
 app.use('/api/vehicles', vehicleRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api/tow-requests', towRequestRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
 // Root route
 app.get('/', (req, res) => {

@@ -3,13 +3,39 @@ import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
 import './Dashboard.css';
 
-interface DashboardStats {
-  users: number;
-  drivers: number;
-  vehicles: number;
-  services: number;
-  towRequests: number;
-  tenants: number;
+interface DashboardMetrics {
+  totals: {
+    users: number;
+    drivers: number;
+    vehicles: number;
+    services: number;
+    towRequests: number;
+    tenants: number;
+    activeRequests: number;
+    completedRequests: number;
+    totalRevenue: number;
+    averageRating: string;
+  };
+  statusBreakdown: Array<{
+    status: string;
+    count: number;
+  }>;
+  revenueByMonth: Array<{
+    month: string;
+    revenue: number;
+    requests: number;
+  }>;
+  topDrivers: Array<{
+    name: string;
+    completedRequests: number;
+    averageRating: string;
+  }>;
+}
+
+interface ToastMessage {
+  id: number;
+  type: 'success' | 'error' | 'info' | 'warning';
+  message: string;
 }
 
 interface RecentRequest {
@@ -39,18 +65,12 @@ interface Notification {
 
 const Dashboard: React.FC = () => {
   const { user, logout } = useAuth();
-  const [stats, setStats] = useState<DashboardStats>({
-    users: 0,
-    drivers: 0,
-    vehicles: 0,
-    services: 0,
-    towRequests: 0,
-    tenants: 0,
-  });
+  const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
   const [recentRequests, setRecentRequests] = useState<RecentRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [toastMessages, setToastMessages] = useState<ToastMessage[]>([]);
   const [activeMenuItem, setActiveMenuItem] = useState('dashboard');
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
   // Mock notifications data
   const [notifications] = useState<Notification[]>([
@@ -104,36 +124,48 @@ const Dashboard: React.FC = () => {
     loadDashboardData();
   }, []);
 
+  // Close user menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      if (isUserMenuOpen && !target.closest('.user-menu-container')) {
+        setIsUserMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isUserMenuOpen]);
+
+  // Toast functions
+  const showToast = (type: 'success' | 'error' | 'info' | 'warning', message: string) => {
+    const id = Date.now();
+    const newToast: ToastMessage = { id, type, message };
+    setToastMessages(prev => [...prev, newToast]);
+    
+    // Auto remove after 4 seconds
+    setTimeout(() => {
+      removeToast(id);
+    }, 4000);
+  };
+
+  const removeToast = (id: number) => {
+    setToastMessages(prev => prev.filter(toast => toast.id !== id));
+  };
+
   const loadDashboardData = async () => {
     try {
       setIsLoading(true);
-      setError('');
 
-      // Load stats from all endpoints
-      const [
-        usersRes,
-        driversRes,
-        vehiclesRes,
-        servicesRes,
-        towRequestsRes,
-        tenantsRes,
-      ] = await Promise.all([
-        axios.get('/users'),
-        axios.get('/drivers'),
-        axios.get('/vehicles'),
-        axios.get('/services'),
-        axios.get('/tow-requests'),
-        axios.get('/tenants'),
+      // Load dashboard metrics from new endpoint
+      const [metricsRes, towRequestsRes] = await Promise.all([
+        axios.get('/api/dashboard/metrics'),
+        axios.get('/api/tow-requests'),
       ]);
 
-      setStats({
-        users: usersRes.data.length,
-        drivers: driversRes.data.length,
-        vehicles: vehiclesRes.data.length,
-        services: servicesRes.data.length,
-        towRequests: towRequestsRes.data.length,
-        tenants: tenantsRes.data.length,
-      });
+      setMetrics(metricsRes.data);
 
       // Get recent requests (last 5)
       const sortedRequests = towRequestsRes.data
@@ -143,10 +175,11 @@ const Dashboard: React.FC = () => {
         .slice(0, 5);
       
       setRecentRequests(sortedRequests);
+      showToast('success', 'Datos del dashboard actualizados correctamente');
 
     } catch (error: any) {
       console.error('Error loading dashboard data:', error);
-      setError('Error al cargar los datos del dashboard');
+      showToast('error', 'Error al cargar los datos del dashboard');
     } finally {
       setIsLoading(false);
     }
@@ -157,6 +190,28 @@ const Dashboard: React.FC = () => {
       await logout();
     } catch (error) {
       console.error('Logout error:', error);
+    }
+  };
+
+  const toggleUserMenu = () => {
+    setIsUserMenuOpen(!isUserMenuOpen);
+  };
+
+  const handleMenuAction = (action: string) => {
+    setIsUserMenuOpen(false);
+    
+    switch (action) {
+      case 'profile':
+        showToast('info', 'Perfil de usuario - próximamente');
+        break;
+      case 'settings':
+        showToast('info', 'Configuración - próximamente');
+        break;
+      case 'logout':
+        handleLogout();
+        break;
+      default:
+        break;
     }
   };
 
@@ -238,42 +293,107 @@ const Dashboard: React.FC = () => {
               <p>Bienvenido, <strong>{user?.full_name}</strong></p>
             </div>
             <div className="header-right">
-              <div className="user-info">
-                <span className="user-name">{user?.full_name}</span>
-                <span className="user-tenant">{user?.tenant_name}</span>
+              <span className="user-display-name">{user?.full_name}</span>
+              <div className="user-menu-container">
+                <button 
+                  className="user-menu-trigger"
+                  onClick={toggleUserMenu}
+                  aria-label="Menú de usuario"
+                >
+                  <div className="user-avatar">
+                    <span className="avatar-initial">
+                      {user?.full_name?.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                  <svg 
+                    className={`menu-arrow ${isUserMenuOpen ? 'open' : ''}`} 
+                    width="12" 
+                    height="12" 
+                    viewBox="0 0 12 12"
+                  >
+                    <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+                  </svg>
+                </button>
+                
+                {isUserMenuOpen && (
+                  <div className="user-dropdown-menu">
+                    <div className="dropdown-header">
+                      <div className="dropdown-user-info">
+                        <div className="dropdown-avatar">
+                          <span>{user?.full_name?.charAt(0).toUpperCase()}</span>
+                        </div>
+                        <div className="dropdown-text">
+                          <span className="dropdown-name">{user?.full_name}</span>
+                          <span className="dropdown-tenant">{user?.tenant_name}</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="dropdown-divider"></div>
+                    
+                    <div className="dropdown-items">
+                      <button 
+                        className="dropdown-item"
+                        onClick={() => handleMenuAction('profile')}
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="currentColor" strokeWidth="2"/>
+                          <circle cx="12" cy="7" r="4" stroke="currentColor" strokeWidth="2"/>
+                        </svg>
+                        <span>Mi Perfil</span>
+                      </button>
+                      
+                      <button 
+                        className="dropdown-item"
+                        onClick={() => handleMenuAction('settings')}
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                          <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2"/>
+                          <path d="M12 1v6m0 6v6m11-6h-6m-6 0H1" stroke="currentColor" strokeWidth="2"/>
+                        </svg>
+                        <span>Configuración</span>
+                      </button>
+                      
+                      <div className="dropdown-divider"></div>
+                      
+                      <button 
+                        className="dropdown-item logout-item"
+                        onClick={() => handleMenuAction('logout')}
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" stroke="currentColor" strokeWidth="2"/>
+                          <polyline points="16,17 21,12 16,7" stroke="currentColor" strokeWidth="2"/>
+                          <line x1="21" y1="12" x2="9" y2="12" stroke="currentColor" strokeWidth="2"/>
+                        </svg>
+                        <span>Cerrar Sesión</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
-              <button onClick={handleLogout} className="logout-button">
-                Cerrar Sesión
-              </button>
             </div>
           </div>
         </header>
 
         {/* Main Content */}
         <main className="dashboard-main">
-          {error && (
-            <div className="error-banner">
-              {error}
-              <button onClick={loadDashboardData} className="retry-button">
-                Reintentar
-              </button>
-            </div>
-          )}
-
           {/* Stats Grid */}
           <section className="stats-grid">
             <div className="stat-card users">
               <div className="stat-icon">👥</div>
               <div className="stat-content">
-                <h3>Usuarios</h3>
-                <p className="stat-number">{stats.users}</p>
+                <h3>Usuarios Activos</h3>
+                <p className="stat-number">{metrics?.totals.users || 0}</p>
+                <span className="stat-change">Registrados en el sistema</span>
               </div>
             </div>
+            
             <div className="stat-card drivers">
               <div className="stat-icon">🚗</div>
               <div className="stat-content">
                 <h3>Conductores</h3>
-                <p className="stat-number">{stats.drivers}</p>
+                <p className="stat-number">{metrics?.totals.drivers || 0}</p>
+                <span className="stat-change">Activos disponibles</span>
               </div>
             </div>
 
@@ -281,31 +401,35 @@ const Dashboard: React.FC = () => {
               <div className="stat-icon">🚛</div>
               <div className="stat-content">
                 <h3>Vehículos</h3>
-                <p className="stat-number">{stats.vehicles}</p>
-              </div>
-            </div>
-
-            <div className="stat-card services">
-              <div className="stat-icon">⚙️</div>
-              <div className="stat-content">
-                <h3>Servicios</h3>
-                <p className="stat-number">{stats.services}</p>
+                <p className="stat-number">{metrics?.totals.vehicles || 0}</p>
+                <span className="stat-change">En la flota</span>
               </div>
             </div>
 
             <div className="stat-card requests">
               <div className="stat-icon">🚨</div>
               <div className="stat-content">
-                <h3>Solicitudes</h3>
-                <p className="stat-number">{stats.towRequests}</p>
+                <h3>Solicitudes Activas</h3>
+                <p className="stat-number">{metrics?.totals.activeRequests || 0}</p>
+                <span className="stat-change">En proceso</span>
               </div>
             </div>
 
-            <div className="stat-card tenants">
-              <div className="stat-icon">🏢</div>
+            <div className="stat-card completed">
+              <div className="stat-icon">✅</div>
               <div className="stat-content">
-                <h3>Empresas</h3>
-                <p className="stat-number">{stats.tenants}</p>
+                <h3>Completadas</h3>
+                <p className="stat-number">{metrics?.totals.completedRequests || 0}</p>
+                <span className="stat-change">Servicios finalizados</span>
+              </div>
+            </div>
+
+            <div className="stat-card revenue">
+              <div className="stat-icon">💰</div>
+              <div className="stat-content">
+                <h3>Ingresos Totales</h3>
+                <p className="stat-number">${metrics?.totals.totalRevenue.toLocaleString() || '0'}</p>
+                <span className="stat-change">⭐ {metrics?.totals.averageRating || 'N/A'} promedio</span>
               </div>
             </div>
           </section>
@@ -365,13 +489,13 @@ const Dashboard: React.FC = () => {
           <section className="quick-actions">
             <h2>⚡ Acciones Rápidas</h2>
             <div className="actions-grid">
-              <button className="action-button" onClick={() => alert('Funcionalidad próximamente')}>
+              <button className="action-button" onClick={() => showToast('info', 'Funcionalidad próximamente')}>
                 ➕ Nueva Solicitud
               </button>
-              <button className="action-button" onClick={() => alert('Funcionalidad próximamente')}>
+              <button className="action-button" onClick={() => showToast('info', 'Funcionalidad próximamente')}>
                 🚗 Gestionar Conductores
               </button>
-              <button className="action-button" onClick={() => alert('Funcionalidad próximamente')}>
+              <button className="action-button" onClick={() => showToast('info', 'Funcionalidad próximamente')}>
                 🚛 Gestionar Vehículos
               </button>
               <button className="action-button" onClick={loadDashboardData}>
@@ -380,6 +504,30 @@ const Dashboard: React.FC = () => {
             </div>
           </section>
         </main>
+      </div>
+
+      {/* Toast Messages */}
+      <div className="toast-container">
+        {toastMessages.map((toast) => (
+          <div
+            key={toast.id}
+            className={`toast toast-${toast.type}`}
+            onClick={() => removeToast(toast.id)}
+          >
+            <div className="toast-content">
+              <span className="toast-icon">
+                {toast.type === 'success' && '✅'}
+                {toast.type === 'error' && '❌'}
+                {toast.type === 'warning' && '⚠️'}
+                {toast.type === 'info' && 'ℹ️'}
+              </span>
+              <span className="toast-message">{toast.message}</span>
+            </div>
+            <button className="toast-close" onClick={() => removeToast(toast.id)}>
+              ×
+            </button>
+          </div>
+        ))}
       </div>
     </div>
   );
