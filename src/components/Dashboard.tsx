@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
+import Cookies from 'js-cookie';
 import './Dashboard.css';
 
 interface DashboardMetrics {
@@ -121,8 +122,14 @@ const Dashboard: React.FC = () => {
   ];
 
   useEffect(() => {
-    loadDashboardData();
-  }, []);
+    console.log('Dashboard component mounted');
+    if (user) {
+      console.log('User is authenticated, loading data...');
+      loadDashboardData();
+    } else {
+      console.log('No user found, waiting for authentication...');
+    }
+  }, [user]);
 
   // Close user menu when clicking outside
   useEffect(() => {
@@ -157,18 +164,38 @@ const Dashboard: React.FC = () => {
 
   const loadDashboardData = async () => {
     try {
+      console.log('Loading dashboard data...');
       setIsLoading(true);
 
+      // Check if user is authenticated
+      if (!user) {
+        console.error('No user authenticated');
+        showToast('error', 'Usuario no autenticado');
+        return;
+      }
+
+      console.log('User authenticated:', user);
+
+      // Check if token exists in cookies
+      const token = Cookies.get('auth_token');
+      console.log('Token from cookies:', token ? `${token.substring(0, 50)}...` : 'No token found');
+
       // Load dashboard metrics from new endpoint
+      console.log('Making API calls...');
       const [metricsRes, towRequestsRes] = await Promise.all([
-        axios.get('/api/dashboard/metrics'),
-        axios.get('/api/tow-requests'),
+        axios.get('/dashboard/metrics'),
+        axios.get('/tow-requests'),
       ]);
 
-      setMetrics(metricsRes.data);
+      console.log('Metrics response:', metricsRes.data);
+      console.log('Tow requests response:', towRequestsRes.data);
 
-      // Get recent requests (last 5)
-      const sortedRequests = towRequestsRes.data
+      setMetrics(metricsRes.data);
+      console.log('Metrics state updated');
+
+      // Get recent requests (last 5) - handle the API response structure
+      const requestsData = towRequestsRes.data.data || towRequestsRes.data;
+      const sortedRequests = requestsData
         .sort((a: RecentRequest, b: RecentRequest) => 
           new Date(b.requested_at).getTime() - new Date(a.requested_at).getTime()
         )
@@ -179,6 +206,7 @@ const Dashboard: React.FC = () => {
 
     } catch (error: any) {
       console.error('Error loading dashboard data:', error);
+      console.error('Error details:', error.response?.data || error.message);
       showToast('error', 'Error al cargar los datos del dashboard');
     } finally {
       setIsLoading(false);
@@ -257,6 +285,9 @@ const Dashboard: React.FC = () => {
       </div>
     );
   }
+
+  console.log('Dashboard rendering with metrics:', metrics);
+  console.log('Recent requests:', recentRequests);
 
   return (
     <div className="dashboard-container">
@@ -415,6 +446,15 @@ const Dashboard: React.FC = () => {
               </div>
             </div>
 
+            <div className="stat-card total-requests">
+              <div className="stat-icon">📋</div>
+              <div className="stat-content">
+                <h3>Total Solicitudes</h3>
+                <p className="stat-number">{metrics?.totals.towRequests || 0}</p>
+                <span className="stat-change">En el sistema</span>
+              </div>
+            </div>
+
             <div className="stat-card completed">
               <div className="stat-icon">✅</div>
               <div className="stat-content">
@@ -428,9 +468,72 @@ const Dashboard: React.FC = () => {
               <div className="stat-icon">💰</div>
               <div className="stat-content">
                 <h3>Ingresos Totales</h3>
-                <p className="stat-number">${metrics?.totals.totalRevenue.toLocaleString() || '0'}</p>
+                <p className="stat-number">${(metrics?.totals.totalRevenue || 0).toLocaleString()}</p>
                 <span className="stat-change">⭐ {metrics?.totals.averageRating || 'N/A'} promedio</span>
               </div>
+            </div>
+
+            <div className="stat-card services">
+              <div className="stat-icon">⚙️</div>
+              <div className="stat-content">
+                <h3>Servicios</h3>
+                <p className="stat-number">{metrics?.totals.services || 0}</p>
+                <span className="stat-change">Tipos disponibles</span>
+              </div>
+            </div>
+
+            <div className="stat-card tenants">
+              <div className="stat-icon">🏢</div>
+              <div className="stat-content">
+                <h3>Empresas</h3>
+                <p className="stat-number">{metrics?.totals.tenants || 0}</p>
+                <span className="stat-change">Tenants activos</span>
+              </div>
+            </div>
+          </section>
+
+          {/* Status Breakdown */}
+          <section className="status-breakdown">
+            <h2>📊 Desglose por Estado</h2>
+            <div className="status-grid">
+              {metrics?.statusBreakdown?.map((status) => (
+                <div key={status.status} className={`status-item status-${status.status}`}>
+                  <div className="status-count">{status.count}</div>
+                  <div className="status-label">
+                    {status.status === 'pending' && 'Pendientes'}
+                    {status.status === 'assigned' && 'Asignadas'}
+                    {status.status === 'in_progress' && 'En Progreso'}
+                    {status.status === 'completed' && 'Completadas'}
+                    {status.status === 'cancelled' && 'Canceladas'}
+                  </div>
+                </div>
+              )) || (
+                <div className="empty-state">
+                  <p>No hay datos de estado disponibles</p>
+                </div>
+              )}
+            </div>
+          </section>
+
+          {/* Top Drivers */}
+          <section className="top-drivers">
+            <h2>🏆 Mejores Conductores</h2>
+            <div className="drivers-list">
+              {metrics?.topDrivers?.slice(0, 5).map((driver, index) => (
+                <div key={`${driver.name}-${index}`} className="driver-item">
+                  <div className="driver-rank">#{index + 1}</div>
+                  <div className="driver-info">
+                    <div className="driver-name">{driver.name}</div>
+                    <div className="driver-stats">
+                      {driver.completedRequests} servicios • ⭐ {driver.averageRating}
+                    </div>
+                  </div>
+                </div>
+              )) || (
+                <div className="empty-state">
+                  <p>No hay datos de conductores disponibles</p>
+                </div>
+              )}
             </div>
           </section>
 
