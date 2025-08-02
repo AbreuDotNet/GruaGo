@@ -28,6 +28,15 @@ interface MenuItem {
   active?: boolean;
 }
 
+interface Notification {
+  id: number;
+  type: 'info' | 'warning' | 'success' | 'error';
+  icon: string;
+  title: string;
+  message: string;
+  time: string;
+}
+
 const Dashboard: React.FC = () => {
   const { user, logout } = useAuth();
   const [stats, setStats] = useState<DashboardStats>({
@@ -42,6 +51,42 @@ const Dashboard: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [activeMenuItem, setActiveMenuItem] = useState('dashboard');
+
+  // Mock notifications data
+  const [notifications] = useState<Notification[]>([
+    {
+      id: 1,
+      type: 'info',
+      icon: '🔔',
+      title: 'Nueva solicitud recibida',
+      message: 'Solicitud de grúa en Zona Norte, requiere atención.',
+      time: 'Hace 5 min'
+    },
+    {
+      id: 2,
+      type: 'success',
+      icon: '✅',
+      title: 'Servicio completado',
+      message: 'Solicitud #1234 finalizada exitosamente.',
+      time: 'Hace 15 min'
+    },
+    {
+      id: 3,
+      type: 'warning',
+      icon: '⚠️',
+      title: 'Conductor sin asignar',
+      message: 'Hay 3 solicitudes pendientes de asignación.',
+      time: 'Hace 30 min'
+    },
+    {
+      id: 4,
+      type: 'info',
+      icon: '👤',
+      title: 'Nuevo usuario registrado',
+      message: 'Usuario María García se registró en el sistema.',
+      time: 'Hace 1 hora'
+    }
+  ]);
 
   const menuItems: MenuItem[] = [
     { id: 'dashboard', label: 'Dashboard', icon: '📊' },
@@ -265,36 +310,56 @@ const Dashboard: React.FC = () => {
             </div>
           </section>
 
-          {/* Recent Requests */}
-          <section className="recent-requests">
-            <h2>📋 Solicitudes Recientes</h2>
-            {recentRequests.length > 0 ? (
-              <div className="requests-table">
-                <div className="table-header">
-                  <div>ID</div>
-                  <div>Origen</div>
-                  <div>Destino</div>
-                  <div>Estado</div>
-                  <div>Precio</div>
-                  <div>Fecha</div>
+          {/* Bottom Sections - Two Columns */}
+          <div className="bottom-sections">
+            {/* Recent Requests */}
+            <section className="recent-requests">
+              <h2>📋 Solicitudes Recientes</h2>
+              {recentRequests.length > 0 ? (
+                <div className="requests-table">
+                  <div className="table-header">
+                    <div>ID</div>
+                    <div>Origen</div>
+                    <div>Destino</div>
+                    <div>Estado</div>
+                    <div>Precio</div>
+                    <div>Fecha</div>
+                  </div>
+                  {recentRequests.map((request) => (
+                    <div key={request.id} className="table-row">
+                      <div>#{request.id}</div>
+                      <div className="truncate">{request.origin_address}</div>
+                      <div className="truncate">{request.destination_address}</div>
+                      <div>{getStatusBadge(request.status)}</div>
+                      <div>${request.total_price}</div>
+                      <div>{formatDate(request.requested_at)}</div>
+                    </div>
+                  ))}
                 </div>
-                {recentRequests.map((request) => (
-                  <div key={request.id} className="table-row">
-                    <div>#{request.id}</div>
-                    <div className="truncate">{request.origin_address}</div>
-                    <div className="truncate">{request.destination_address}</div>
-                    <div>{getStatusBadge(request.status)}</div>
-                    <div>${request.total_price}</div>
-                    <div>{formatDate(request.requested_at)}</div>
+              ) : (
+                <div className="empty-state">
+                  <p>No hay solicitudes recientes</p>
+                </div>
+              )}
+            </section>
+
+            {/* Notifications */}
+            <section className="notifications">
+              <h2>🔔 Notificaciones</h2>
+              <div className="notifications-list">
+                {notifications.map((notification) => (
+                  <div key={notification.id} className="notification-item">
+                    <div className="notification-icon">{notification.icon}</div>
+                    <div className="notification-content">
+                      <div className="notification-title">{notification.title}</div>
+                      <div className="notification-message">{notification.message}</div>
+                      <div className="notification-time">{notification.time}</div>
+                    </div>
                   </div>
                 ))}
               </div>
-            ) : (
-              <div className="empty-state">
-                <p>No hay solicitudes recientes</p>
-              </div>
-            )}
-          </section>
+            </section>
+          </div>
 
           {/* Quick Actions */}
           <section className="quick-actions">
