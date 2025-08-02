@@ -401,25 +401,30 @@
 /* Stats Grid */
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 12px;
   justify-content: center;
   align-items: stretch;
   margin-bottom: 24px;
+  max-width: 100%;
+  overflow-x: auto;
 }
 
 .stat-card {
   background: white;
-  border-radius: 12px;
-  padding: 20px 16px;
-  box-shadow: 0 4px 20px rgba(25, 118, 210, 0.08);
+  border-radius: 10px;
+  padding: 16px 12px;
+  box-shadow: 0 3px 15px rgba(25, 118, 210, 0.08);
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: 8px;
   transition: all 0.3s ease;
   border-left: 4px solid transparent;
   text-align: center;
+  min-width: 140px;
+  position: relative;
 }
 
 .stat-card:hover {
@@ -435,28 +440,39 @@
 .stat-card.tenants { border-left-color: #00acc1; }
 
 .stat-icon {
-  font-size: 2rem;
+  font-size: 1.5rem;
   opacity: 0.9;
+  margin-bottom: 4px;
 }
 
 .stat-content {
   text-align: center;
+  width: 100%;
 }
 
 .stat-content h3 {
-  margin: 0 0 4px 0;
-  font-size: 0.8rem;
+  margin: 0 0 6px 0;
+  font-size: 0.7rem;
   color: #546e7a;
   text-transform: uppercase;
-  letter-spacing: 0.6px;
+  letter-spacing: 0.5px;
   font-weight: 700;
+  line-height: 1.2;
 }
 
 .stat-number {
-  margin: 0;
-  font-size: 1.8rem;
+  margin: 0 0 4px 0;
+  font-size: 1.4rem;
   font-weight: 800;
   color: #1565c0;
+  line-height: 1;
+}
+
+.stat-change {
+  font-size: 0.65rem;
+  color: #78909c;
+  font-weight: 500;
+  line-height: 1.2;
 }
 
 /* Bottom Sections Grid */
@@ -784,7 +800,27 @@
   }
 
   .stats-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    overflow-x: auto;
+    padding: 0 4px;
+  }
+
+  .stat-card {
+    min-width: 120px;
+    padding: 12px 8px;
+  }
+
+  .stat-content h3 {
+    font-size: 0.6rem;
+  }
+
+  .stat-number {
+    font-size: 1.2rem;
+  }
+
+  .stat-change {
+    font-size: 0.6rem;
   }
 
   .bottom-sections {
@@ -1065,4 +1101,33 @@
 .driver-stats {
   font-size: 0.85rem;
   color: #546e7a;
+}
+
+/* Extra small screens - for mobile phones */
+@media (max-width: 480px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+  }
+
+  .stat-card {
+    min-width: 100px;
+    padding: 10px 6px;
+  }
+
+  .stat-icon {
+    font-size: 1.2rem;
+  }
+
+  .stat-content h3 {
+    font-size: 0.55rem;
+  }
+
+  .stat-number {
+    font-size: 1rem;
+  }
+
+  .stat-change {
+    font-size: 0.55rem;
+  }
 }
