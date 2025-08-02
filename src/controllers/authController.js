@@ -1,19 +1,11 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { Pool } = require('pg');
-require('dotenv').config();
-
-const pool = new Pool({
-  host: process.env.PG_HOST,
-  port: process.env.PG_PORT,
-  database: process.env.PG_DATABASE,
-  user: process.env.PG_USER,
-  password: process.env.PG_PASSWORD,
-});
+const db = require('../config/db');
+require('dotenv').config({ path: '../.env' });
 
 // Registro de nuevo usuario
 const register = async (req, res) => {
-  const client = await pool.connect();
+  const client = await db.pool.connect();
   
   try {
     const { tenantId, fullName, email, phone, password } = req.body;
@@ -105,13 +97,15 @@ const register = async (req, res) => {
 
 // Login de usuario
 const login = async (req, res) => {
-  const client = await pool.connect();
+  const client = await db.pool.connect();
   
   try {
+    console.log('Login attempt:', { email: req.body.email, passwordProvided: !!req.body.password });
     const { email, password } = req.body;
 
     // Validar campos requeridos
     if (!email || !password) {
+      console.log('Missing credentials');
       return res.status(400).json({
         error: 'Missing credentials',
         message: 'Email y contraseña son requeridos'
@@ -119,6 +113,7 @@ const login = async (req, res) => {
     }
 
     // Buscar usuario por email
+    console.log('Searching for user with email:', email);
     const result = await client.query(
       `SELECT u.id, u.tenant_id, u.full_name, u.email, u.phone, u.password_hash, u.is_active,
               t.name as tenant_name, t.is_active as tenant_active
@@ -128,7 +123,9 @@ const login = async (req, res) => {
       [email]
     );
 
+    console.log('User query result:', result.rows.length);
     if (result.rows.length === 0) {
+      console.log('User not found');
       return res.status(401).json({
         error: 'Invalid credentials',
         message: 'Email o contraseña incorrectos'
@@ -136,6 +133,7 @@ const login = async (req, res) => {
     }
 
     const user = result.rows[0];
+    console.log('User found:', { id: user.id, email: user.email, active: user.is_active, tenant_active: user.tenant_active });
 
     // Verificar que el usuario y su tenant estén activos
     if (!user.is_active) {
@@ -204,8 +202,8 @@ const login = async (req, res) => {
   } catch (error) {
     console.error('Error in login:', error);
     res.status(500).json({
-      error: 'Login failed',
-      message: 'Error interno del servidor durante login'
+      success: false,
+      error: 'Server Error'
     });
   } finally {
     client.release();
@@ -214,7 +212,7 @@ const login = async (req, res) => {
 
 // Obtener perfil del usuario autenticado
 const getProfile = async (req, res) => {
-  const client = await pool.connect();
+  const client = await db.pool.connect();
   
   try {
     const userId = req.user.id;
@@ -264,7 +262,7 @@ const getProfile = async (req, res) => {
 
 // Cambiar contraseña
 const changePassword = async (req, res) => {
-  const client = await pool.connect();
+  const client = await db.pool.connect();
   
   try {
     const userId = req.user.id;

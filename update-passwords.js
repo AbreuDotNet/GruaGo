@@ -1,6 +1,6 @@
 const { Pool } = require('pg');
 const bcrypt = require('bcrypt');
-require('dotenv').config();
+require('dotenv').config({ path: '.env' });
 
 const pool = new Pool({
   host: process.env.PG_HOST,
