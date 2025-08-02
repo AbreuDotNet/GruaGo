@@ -879,23 +879,11 @@
 }
 
 .stat-card.revenue {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  color: white;
-}
-
-.stat-card.revenue .stat-content h3,
-.stat-card.revenue .stat-change {
-  color: rgba(255, 255, 255, 0.9);
+  border-left-color: #10b981;
 }
 
 .stat-card.completed {
-  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-  color: white;
-}
-
-.stat-card.completed .stat-content h3,
-.stat-card.completed .stat-change {
-  color: rgba(255, 255, 255, 0.9);
+  border-left-color: #8b5cf6;
 }
 
 /* Toast notifications */

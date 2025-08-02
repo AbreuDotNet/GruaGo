@@ -122,9 +122,7 @@ const Dashboard: React.FC = () => {
   ];
 
   useEffect(() => {
-    console.log('Dashboard component mounted');
     if (user) {
-      console.log('User is authenticated, loading data...');
       loadDashboardData();
     } else {
       console.log('No user found, waiting for authentication...');
@@ -151,11 +149,11 @@ const Dashboard: React.FC = () => {
     const id = Date.now();
     const newToast: ToastMessage = { id, type, message };
     setToastMessages(prev => [...prev, newToast]);
-    
-    // Auto remove after 4 seconds
+
+    // Auto remove after 3 seconds
     setTimeout(() => {
       removeToast(id);
-    }, 4000);
+    }, 3000);
   };
 
   const removeToast = (id: number) => {
@@ -174,24 +172,17 @@ const Dashboard: React.FC = () => {
         return;
       }
 
-      console.log('User authenticated:', user);
-
       // Check if token exists in cookies
       const token = Cookies.get('auth_token');
-      console.log('Token from cookies:', token ? `${token.substring(0, 50)}...` : 'No token found');
 
       // Load dashboard metrics from new endpoint
-      console.log('Making API calls...');
       const [metricsRes, towRequestsRes] = await Promise.all([
         axios.get('/dashboard/metrics'),
         axios.get('/tow-requests'),
       ]);
 
-      console.log('Metrics response:', metricsRes.data);
-      console.log('Tow requests response:', towRequestsRes.data);
-
+      // Set metrics state
       setMetrics(metricsRes.data);
-      console.log('Metrics state updated');
 
       // Get recent requests (last 5) - handle the API response structure
       const requestsData = towRequestsRes.data.data || towRequestsRes.data;
@@ -205,7 +196,6 @@ const Dashboard: React.FC = () => {
       showToast('success', 'Datos del dashboard actualizados correctamente');
 
     } catch (error: any) {
-      console.error('Error loading dashboard data:', error);
       console.error('Error details:', error.response?.data || error.message);
       showToast('error', 'Error al cargar los datos del dashboard');
     } finally {
@@ -285,9 +275,6 @@ const Dashboard: React.FC = () => {
       </div>
     );
   }
-
-  console.log('Dashboard rendering with metrics:', metrics);
-  console.log('Recent requests:', recentRequests);
 
   return (
     <div className="dashboard-container">
@@ -410,14 +397,14 @@ const Dashboard: React.FC = () => {
         <main className="dashboard-main">
           {/* Stats Grid */}
           <section className="stats-grid">
-            <div className="stat-card users">
+            {/* <div className="stat-card users">
               <div className="stat-icon">👥</div>
               <div className="stat-content">
                 <h3>Usuarios Activos</h3>
                 <p className="stat-number">{metrics?.totals.users || 0}</p>
                 <span className="stat-change">Registrados en el sistema</span>
               </div>
-            </div>
+            </div>*/}
             
             <div className="stat-card drivers">
               <div className="stat-icon">🚗</div>
