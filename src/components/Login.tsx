@@ -25,7 +25,7 @@ const Login: React.FC = () => {
   };
 
   const handleDemoLogin = () => {
-    setEmail('juan.perez@email.com');
+    setEmail('Abreu2310@gmail.com');
     setPassword('password123');
   };
 
@@ -123,14 +123,6 @@ const Login: React.FC = () => {
               </div>
 
               <div className="feature-item">
-                <div className="feature-icon">📱</div>
-                <div className="feature-text">
-                  <h3>Tecnología Moderna</h3>
-                  <p>Interfaz intuitiva y herramientas avanzadas de análisis</p>
-                </div>
-              </div>
-
-              <div className="feature-item">
                 <div className="feature-icon">⚡</div>
                 <div className="feature-text">
                   <h3>Respuesta Rápida</h3>
@@ -144,15 +136,6 @@ const Login: React.FC = () => {
                 "La tecnología al servicio de la eficiencia en cada rescate"
               </blockquote>
               <cite>- Equipo GruaGo</cite>
-            </div>
-
-            <div className="announcements">
-              <h4>📢 Novedades</h4>
-              <ul>
-                <li>✨ Nuevo sistema de métricas en tiempo real</li>
-                <li>🔔 Notificaciones inteligentes implementadas</li>
-                <li>📈 Dashboard mejorado con analytics avanzados</li>
-              </ul>
             </div>
           </div>
         </div>
